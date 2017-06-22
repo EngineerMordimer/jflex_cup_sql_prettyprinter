@@ -1,0 +1,73 @@
+package Example;
+
+import java_cup.runtime.*;
+import java.util.*;
+
+parser code {:
+    private static final boolean DEBUG = false;
+    public static int spacesOnList = 0;
+    public static int lastSpacesOnList = 0;
+    public static String tab = "  ";
+    public static int mainLevel = 0;
+
+
+    public static void logD(String tag, Object l){
+      if(DEBUG){
+          System.out.println(tag + " parser now: " + spacesOnList +
+          ", l now: "+(Integer) l + ", last parser: "+ lastSpacesOnList);
+      }
+    }
+    public static void main(String args[]) throws Exception {
+	    ComplexSymbolFactory sf = new ComplexSymbolFactory();
+	    new Parser(new Scanner(new java.io.FileInputStream(args[0]),sf),sf).parse();
+    }
+    public void syntax_error(Symbol sym){
+	    System.out.print("PROBLEM: " + sym + " compiler has detected a syntax error at line " + sym
+	    .left + " column " + sym.right);
+    }
+    public void resetStaticListAttr(){
+        spacesOnList = 0;
+        lastSpacesOnList = 0;
+    }
+
+    public String makeIndent(){
+    	return String.join("", Collections.nCopies(mainLevel, tab));
+    }
+
+:}
+
+/* Terminals (tokens returned by the scanner). */
+terminal STRING, NL, SPACE;
+
+terminal SELECT, FROM, LJOIN, RJOIN, NJOIN, UNION;
+
+non terminal file, expr_line, initial;
+
+non terminal String textString, spaceL, select1;
+
+precedence left STRING, SELECT, SPACE, NL;
+
+start with initial;
+ initial   ::=   file  {: System.out.print("Should ends"); :};
+
+ file      ::= |
+ 				expr_line:e file  {: System.out.print("\n"); :};
+
+ expr_line ::=
+             NL
+             |textString:s NL  {:System.out.print(s+"\n") ;:}
+             ;
+
+ textString ::= SELECT:s spaceL:sp textString:t {: RESULT=(s+"\n"+parser.tab+t); :}
+ 				| FROM:s spaceL:sp textString:t {: RESULT=("\n"+s+sp+t); :}
+ 				| LJOIN:s spaceL:sp textString:t {: RESULT=("\n"+s+sp+t); :}
+ 				| RJOIN:s spaceL:sp textString:t {: RESULT=("\n"+s+sp+t); :}
+ 				| NJOIN:s spaceL:sp textString:t {: RESULT=("\n"+s+sp+t); :}
+ 				| UNION:s spaceL:sp textString:t {: RESULT=("\n\n"+s+sp+"\n\n"+t); :}
+ 				| STRING:s {: RESULT=(""+s); :}
+ 				| STRING:s spaceL:sp textString:t {: RESULT=(s+sp+t); :}
+ 				;
+
+ spaceL ::=    SPACE:s {: RESULT= " "; :}
+           ;
+
