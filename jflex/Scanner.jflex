@@ -60,14 +60,28 @@ nl				= [\n|\r|\r\n]+
 tab				= [\t\f]
 space			= (" ")+
 comma           = ","
-string			= [a-zA-Z0-9.;:>=()]+
+obracket        = "("
+cbracket        = ")"
+string			= [a-zA-Z0-9.;:>=_\-()'&%*]+
+
 select			= "SELECT"
 from			= "FROM"
 ljoin			= "LEFT"" "+"JOIN"
 rjoin			= "RIGHT"" "+"JOIN"
 njoin			= "JOIN"
-union			= "UNION"
-
+union			= "UNION"" ALL"?
+where           = "WHERE"
+and             = "AND"
+or              = "OR"
+between         = "BETWEEN".+"AND"
+todate          = "TO_DATE(".+")"
+coalesce        = "COALESCE(".+")"
+case            = "CASE"
+when            = "WHEN"
+else            = "ELSE"
+end             = "END"
+group           = "GROUP"" "+"BY"
+order           = "ORDER"" "+"BY"
 
 %%
 
@@ -77,8 +91,23 @@ union			= "UNION"
 {rjoin}      	{	return superSymbol("RJOIN", sym.RJOIN, new String(yytext()));}
 {njoin}      	{	return superSymbol("NJOIN", sym.NJOIN, new String(yytext()));}
 {union}      	{	return superSymbol("UNION", sym.UNION, new String(yytext()));}
+{where}      	{	return superSymbol("WHERE", sym.WHERE, new String(yytext()));}
+{and}      	    {	return superSymbol("AND", sym.AND, new String(yytext()));}
+{or}      	    {	return superSymbol("OR", sym.OR, new String(yytext()));}
+{between}      	{	return superSymbol("BETWEEN", sym.BETWEEN, new String(yytext()));}
+{todate}        {	return superSymbol("TODATE", sym.TODATE, new String(yytext()));}
+{coalesce}      {	return superSymbol("COALESCE", sym.COALESCE, new String(yytext()));}
+{case}          {	return superSymbol("CASE", sym.CASE, new String(yytext()));}
+{when}          {	return superSymbol("WHEN", sym.WHEN, new String(yytext()));}
+{else}          {	return superSymbol("ELSE", sym.ELSE, new String(yytext()));}
+{end}           {	return superSymbol("END", sym.END, new String(yytext()));}
+{group}           {	return superSymbol("GROUP", sym.GROUP, new String(yytext()));}
+{order}           {	return superSymbol("ORDER", sym.ORDER, new String(yytext()));}
+
 
 {nl}			{	return superSymbol("NL", sym.NL);}
 {space}			{	return superSymbol("SPACE", sym.SPACE,new String(yytext()));}
 {comma}			{	return superSymbol("COMMA", sym.COMMA, new String(yytext()));}
+{obracket}		{	return superSymbol("OBRACKET", sym.OBRACKET, new String(yytext()));}
+{cbracket}		{	return superSymbol("CBRACKET", sym.CBRACKET, new String(yytext()));}
 {string}		{	return superSymbol("STRING", sym.STRING, new String(yytext()));}

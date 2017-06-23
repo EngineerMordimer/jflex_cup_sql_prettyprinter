@@ -5,9 +5,9 @@ import java.util.*;
 import java.io.*;
 
 parser code {:
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private static StringBuilder generatedPrettyText = new StringBuilder();
-    public static String tab = "->";
+    public static String tab = "    ";
     public static int mainLevel = 0;
 	public static File file ;
 	public static FileOutputStream fop;
@@ -88,9 +88,12 @@ parser code {:
 :}
 
 /* Terminals (tokens returned by the scanner). */
-terminal STRING, NL, SPACE;
+terminal STRING, NL, SPACE, COMMA, OBRACKET , CBRACKET;
 
-terminal SELECT, FROM, LJOIN, RJOIN, NJOIN, UNION, COMMA;
+terminal SELECT, FROM, LJOIN, RJOIN, NJOIN, UNION
+    , WHERE, AND, OR, BETWEEN, TODATE, COALESCE
+    , CASE, WHEN, ELSE, END
+    , GROUP, ORDER;
 
 non terminal file, expr, initial;
 
@@ -111,27 +114,56 @@ start with initial;
 
   text ::=
   	SELECT:s
- 		{: parser.addPrettyText(""+s); parser.increaseIndent();
+ 		{: parser.addPrettyText(""+parser.makeNLIndent()+s); parser.increaseIndent();
  		parser.addPrettyText(""+parser.makeNLIndent()); :}
- 	| SPACE FROM:s
+ 	| FROM:s
  		{: parser.decreaseIndent(); parser.addPrettyText( parser.makeNLIndent()+s);	:}
- 	| SPACE LJOIN:s
+ 	| LJOIN:s
  		{: parser.addPrettyText( parser.makeNLIndent()+s); :}
- 	| SPACE RJOIN:s
+ 	| RJOIN:s
  		{: parser.addPrettyText( parser.makeNLIndent()+s); :}
- 	| SPACE NJOIN:s
+ 	| NJOIN:s
  		{: parser.addPrettyText( parser.makeNLIndent()+s); :}
  	| UNION:s
- 		{: parser.addPrettyText("\n"+parser.makeNLIndent()+s+"\n"+parser.makeNLIndent()); :}
+ 		{: parser.addPrettyText("\n"+parser.makeNLIndent()+s+"\n"); :}
+ 	| WHERE:s
+ 	    {: parser.addPrettyText( parser.makeNLIndent()+s); :}
+ 	| AND:s
+ 	    {: parser.increaseIndent(); parser.addPrettyText( parser.makeNLIndent()+s); parser.decreaseIndent(); :}
+ 	| OR:s
+ 	    {: parser.increaseIndent(); parser.addPrettyText( parser.makeNLIndent()+s); parser.decreaseIndent(); :}
+    | BETWEEN:s
+        {: parser.addPrettyText( ""+s); :}
+    | TODATE:s
+        {: parser.addPrettyText( ""+s); :}
+    | COALESCE:s
+        {: parser.addPrettyText( ""+s); :}
+    | CASE:s
+        {:  parser.addPrettyText( ""+s); parser.increaseIndent();  :}
+    | WHEN:s
+        {:  parser.addPrettyText( parser.makeNLIndent()+s); :}
+    | ELSE:s
+        {:  parser.addPrettyText( parser.makeNLIndent()+s); :}
+    | END:s
+        {:  parser.decreaseIndent(); parser.addPrettyText( parser.makeNLIndent()+s); :}
+    | GROUP:s
+        {:  parser.addPrettyText( parser.makeNLIndent()+s); :}
+    | ORDER:s
+        {:  parser.addPrettyText( parser.makeNLIndent()+s); :}
+
  	| SPACE COMMA:s
- 		{: parser.addPrettyText( parser.makeNLIndent()+parser.makeIndent()+s); :}
+ 		{: parser.addPrettyText( parser.makeNLIndent()+s); :}
  	| STRING:s
  		{: parser.addPrettyText(""+s); :}
  	| NL
  		{: parser.addPrettyText(" "); :}
  	| SPACE
  		{: parser.addPrettyText(" "); :}
- 						;
+ 	| OBRACKET:s
+ 	    {: parser.increaseIndent(); parser.addPrettyText(""+s); :}
+ 	| CBRACKET:s
+ 	    {: parser.decreaseIndent(); parser.addPrettyText(""+parser.makeNLIndent()+s); :}
+ 	;
 
  spaceS ::=    SPACE:s {: RESULT= " "; :}
            ;
