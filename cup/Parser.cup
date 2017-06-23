@@ -5,9 +5,9 @@ import java.util.*;
 import java.io.*;
 
 parser code {:
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     private static StringBuilder generatedPrettyText = new StringBuilder();
-    public static String tab = "  ";
+    public static String tab = "->";
     public static int mainLevel = 0;
 	public static File file ;
 	public static FileOutputStream fop;
@@ -30,31 +30,41 @@ parser code {:
 		printPrettyText();
 
 		printPrettyTextToFile();
-
-
     }
 
     public void syntax_error(Symbol sym){
-	    printPrettyTextToFile();
+	    if (DEBUG){
+	    	printPrettyTextToFile();
+	    }
 	    System.out.print("PROBLEM: " + sym + " compiler has detected a syntax error at line " + sym
 	    .left + " column " + sym.right);
     }
 
+	public String makeNLIndent(){
+		return "\n"+makeIndent();
+	}
+
     public String makeIndent(){
-    	//addPrettyText("L:"+mainLevel);
+    	if (DEBUG){
+    		addPrettyText("L:"+mainLevel);
+    	}
     	return String.join("", Collections.nCopies(mainLevel, tab));
     }
 
     public void increaseIndent(){
     	mainLevel++;
-    	//addPrettyText("L+:"+mainLevel);
+    	if (DEBUG){
+    		addPrettyText("L+:"+mainLevel);
+    	}
     }
 
     public void decreaseIndent(){
     	if (mainLevel > 0){
     		mainLevel--;
     	}
-    	//addPrettyText("L-:"+mainLevel);
+    	if (DEBUG){
+    		addPrettyText("L-:"+mainLevel);
+    	}
     }
 
 	public void addPrettyText(String text){
@@ -84,41 +94,43 @@ terminal SELECT, FROM, LJOIN, RJOIN, NJOIN, UNION, COMMA;
 
 non terminal file, expr, initial;
 
-non terminal String textString, spaceS, select1;
+non terminal String  text, spaceS, select1;
 
 precedence left STRING, SELECT, SPACE, NL;
 
 start with initial;
- initial   ::=   file  {: System.out.print("Should ends"); :};
+ initial  	::=   file
+ 				;
 
- file      ::= |
- 				expr:e file  {: :};
+ file     	::=
+ 				| expr file
+ 				;
 
- expr::=
-             textString:t expr  {: :}
+ expr		::=  text
+             	;
 
-             ;
-
- textString ::= SELECT:s spaceS:sp
- 	{: parser.addPrettyText(""+s+"\n"+parser.makeIndent()); parser.increaseIndent(); :}
- 				| FROM:s spaceS:sp
- 	{: parser.addPrettyText("\n"+s+sp);	parser.decreaseIndent(); RESULT=("\n"+s+sp); :}
- 				| LJOIN:s spaceS:sp
- 	{: parser.addPrettyText("\n"+s+sp); RESULT=("\n"+s+sp ); :}
- 				| RJOIN:s spaceS:sp
- 	{: parser.addPrettyText("\n"+s+sp); RESULT=("\n"+s+sp ); :}
- 				| NJOIN:s spaceS:sp
- 	{: parser.addPrettyText("\n"+s+sp); RESULT=("\n"+s+sp ); :}
- 				| UNION:s spaceS:sp
- 	{: parser.addPrettyText("\n\n"+s+sp+"\n\n"); RESULT=("\n\n"+s+sp+"\n\n" ); :}
- 				| COMMA:s spaceS:sp
- 	{: parser.addPrettyText("\n"+parser.makeIndent()+s+sp); :}
- 				| STRING:s
- 	{: parser.addPrettyText(""+s); RESULT=(""+s); :}
- 				| STRING:s spaceS:sp
- 	{: parser.addPrettyText(""+s+sp); RESULT=(""+s+sp); :}
- 				| NL
- 				| spaceS
+  text ::=
+  	SELECT:s
+ 		{: parser.addPrettyText(""+s); parser.increaseIndent();
+ 		parser.addPrettyText(""+parser.makeNLIndent()); :}
+ 	| SPACE FROM:s
+ 		{: parser.decreaseIndent(); parser.addPrettyText( parser.makeNLIndent()+s);	:}
+ 	| SPACE LJOIN:s
+ 		{: parser.addPrettyText( parser.makeNLIndent()+s); :}
+ 	| SPACE RJOIN:s
+ 		{: parser.addPrettyText( parser.makeNLIndent()+s); :}
+ 	| SPACE NJOIN:s
+ 		{: parser.addPrettyText( parser.makeNLIndent()+s); :}
+ 	| UNION:s
+ 		{: parser.addPrettyText("\n"+parser.makeNLIndent()+s+"\n"+parser.makeNLIndent()); :}
+ 	| SPACE COMMA:s
+ 		{: parser.addPrettyText( parser.makeNLIndent()+parser.makeIndent()+s); :}
+ 	| STRING:s
+ 		{: parser.addPrettyText(""+s); :}
+ 	| NL
+ 		{: parser.addPrettyText(" "); :}
+ 	| SPACE
+ 		{: parser.addPrettyText(" "); :}
  						;
 
  spaceS ::=    SPACE:s {: RESULT= " "; :}

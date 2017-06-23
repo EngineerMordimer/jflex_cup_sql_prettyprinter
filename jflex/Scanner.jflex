@@ -56,11 +56,11 @@ import java.io.*;
     return sf.newSymbol("EOF",sym.EOF);
 %eofval}
 
-nl				= [\n|\r|\r\n]
+nl				= [\n|\r|\r\n]+
 tab				= [\t\f]
 space			= (" ")+
 comma           = ","
-string			= [a-zA-Z0-9.;:>=]+
+string			= [a-zA-Z0-9.;:>=()]+
 select			= "SELECT"
 from			= "FROM"
 ljoin			= "LEFT"" "+"JOIN"

@@ -1,0 +1,22 @@
+selectL+:1L:1
+-> a1.aL:1L:1
+->->,  a1.bL:1L:1
+->->,a1.cL:1L:1
+->->, a1.dL:1L:1
+->->, a1.eL:1L:1
+->->, a1.fL:1L:1
+->->, ( selectL+:2L:2
+->-> 1 aL:2L:2
+->->->->, 2bL-:1L:1
+->from dual )L-:0L:0
+from a a1L:0
+LEFT JOIN b b1 on b1.a  =a1.aL:0
+RIGHT JOIN c c1 on c1.a = b1.a L:0L:0
+
+UNION
+
+ selectL+:1L:1
+-> null a2L:1L:1
+->->, null b2L:1L:1
+->->, null c2L-:0L:0
+from dual where 1=1 and 2=2 or 3=3 ; 
