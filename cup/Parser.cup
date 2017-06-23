@@ -2,36 +2,66 @@ package Example;
 
 import java_cup.runtime.*;
 import java.util.*;
+import java.io.*;
 
 parser code {:
     private static final boolean DEBUG = false;
-    public static int spacesOnList = 0;
-    public static int lastSpacesOnList = 0;
+    private static StringBuilder generatedPrettyText = new StringBuilder();
     public static String tab = "  ";
     public static int mainLevel = 0;
 
 
-    public static void logD(String tag, Object l){
-      if(DEBUG){
-          System.out.println(tag + " parser now: " + spacesOnList +
-          ", l now: "+(Integer) l + ", last parser: "+ lastSpacesOnList);
-      }
-    }
     public static void main(String args[]) throws Exception {
-	    ComplexSymbolFactory sf = new ComplexSymbolFactory();
-	    new Parser(new Scanner(new java.io.FileInputStream(args[0]),sf),sf).parse();
+
+		File file = new File("out.txt");
+		FileOutputStream fop = new FileOutputStream(file);
+		if (!file.exists()) {
+			file.createNewFile();
+		}
+
+	    ComplexSymbolFactory complexSymbolFactor = new ComplexSymbolFactory();
+	    FileInputStream fileInputStream = new FileInputStream(args[0]);
+	    Scanner scanner = new Scanner(fileInputStream, complexSymbolFactor);
+	    Parser parser = new Parser(scanner, complexSymbolFactor);
+
+	    parser.parse();
+		printPrettyText();
+
+
+        fop.write(generatedPrettyText.toString().getBytes());
+        fop.flush();
+        fop.close();
+
     }
+
     public void syntax_error(Symbol sym){
 	    System.out.print("PROBLEM: " + sym + " compiler has detected a syntax error at line " + sym
 	    .left + " column " + sym.right);
     }
-    public void resetStaticListAttr(){
-        spacesOnList = 0;
-        lastSpacesOnList = 0;
-    }
 
     public String makeIndent(){
+    	addPrettyText("L:"+mainLevel);
     	return String.join("", Collections.nCopies(mainLevel, tab));
+    }
+
+    public void increaseIndent(){
+    	mainLevel++;
+    	addPrettyText("L+:"+mainLevel);
+    }
+
+    public void decreaseIndent(){
+    	if (mainLevel > 0){
+    		mainLevel--;
+    	}
+    	addPrettyText("L-:"+mainLevel);
+    }
+
+	public void addPrettyText(String text){
+		generatedPrettyText.insert(0,text);
+	}
+
+    public static void printPrettyText(){
+    	System.out.println(generatedPrettyText.toString());
     }
 
 :}
@@ -39,11 +69,11 @@ parser code {:
 /* Terminals (tokens returned by the scanner). */
 terminal STRING, NL, SPACE;
 
-terminal SELECT, FROM, LJOIN, RJOIN, NJOIN, UNION;
+terminal SELECT, FROM, LJOIN, RJOIN, NJOIN, UNION, COMMA;
 
-non terminal file, expr_line, initial;
+non terminal file, expr, initial;
 
-non terminal String textString, spaceL, select1;
+non terminal String textString, spaceS, select1;
 
 precedence left STRING, SELECT, SPACE, NL;
 
@@ -51,23 +81,32 @@ start with initial;
  initial   ::=   file  {: System.out.print("Should ends"); :};
 
  file      ::= |
- 				expr_line:e file  {: System.out.print("\n"); :};
+ 				expr:e file  {: :};
 
- expr_line ::=
-             NL
-             |textString:s NL  {:System.out.print(s+"\n") ;:}
+ expr::=
+             textString:t NL {: :}
              ;
 
- textString ::= SELECT:s spaceL:sp textString:t {: RESULT=(s+"\n"+parser.tab+t); :}
- 				| FROM:s spaceL:sp textString:t {: RESULT=("\n"+s+sp+t); :}
- 				| LJOIN:s spaceL:sp textString:t {: RESULT=("\n"+s+sp+t); :}
- 				| RJOIN:s spaceL:sp textString:t {: RESULT=("\n"+s+sp+t); :}
- 				| NJOIN:s spaceL:sp textString:t {: RESULT=("\n"+s+sp+t); :}
- 				| UNION:s spaceL:sp textString:t {: RESULT=("\n\n"+s+sp+"\n\n"+t); :}
- 				| STRING:s {: RESULT=(""+s); :}
- 				| STRING:s spaceL:sp textString:t {: RESULT=(s+sp+t); :}
- 				;
+ textString ::= SELECT:s spaceS:sp textString:t
+ 	{: parser.addPrettyText(""+s+"\n"+parser.makeIndent()); parser.increaseIndent(); :}
+ 				| FROM:s spaceS:sp textString:t
+ 	{: parser.addPrettyText("\n"+s+sp);	parser.decreaseIndent(); RESULT=("\n"+s+sp+t); :}
+ 				| LJOIN:s spaceS:sp textString:t
+ 	{: parser.addPrettyText("\n"+s+sp); RESULT=("\n"+s+sp+t); :}
+ 				| RJOIN:s spaceS:sp textString:t
+ 	{: parser.addPrettyText("\n"+s+sp); RESULT=("\n"+s+sp+t); :}
+ 				| NJOIN:s spaceS:sp textString:t
+ 	{: parser.addPrettyText("\n"+s+sp); RESULT=("\n"+s+sp+t); :}
+ 				| UNION:s spaceS:sp textString:t
+ 	{: parser.addPrettyText("\n\n"+s+sp+"\n\n"); RESULT=("\n\n"+s+sp+"\n\n"+t); :}
+ 				| COMMA:s spaceS:sp textString:t
+ 	{: parser.addPrettyText("\n"+parser.makeIndent()+s+sp); :}
+ 				| STRING:s
+ 	{: parser.addPrettyText(""+s); RESULT=(""+s); :}
+ 				| STRING:s spaceS:sp textString:t
+ 	{: parser.addPrettyText(""+s+sp); RESULT=(""+s+sp); :}
+ 						;
 
- spaceL ::=    SPACE:s {: RESULT= " "; :}
+ spaceS ::=    SPACE:s {: RESULT= " "; :}
            ;
 

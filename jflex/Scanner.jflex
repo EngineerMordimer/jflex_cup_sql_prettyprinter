@@ -14,7 +14,7 @@ import java.io.*;
 
 %class Scanner
 %{
-	private static final Boolean DEBUG=false;
+	private static final Boolean DEBUG=true;
 	private ComplexSymbolFactory sf;
 
 	public Scanner(java.io.InputStream r, ComplexSymbolFactory sf){
@@ -59,7 +59,8 @@ import java.io.*;
 nl				= [\n|\r|\r\n]
 tab				= [\t\f]
 space			= (" ")+
-string			= [a-zA-Z0-9.,;:>=]+
+comma           = ","
+string			= [a-zA-Z0-9.;:>=]+
 select			= "SELECT"
 from			= "FROM"
 ljoin			= "LEFT"" "+"JOIN"
@@ -76,6 +77,8 @@ union			= "UNION"
 {rjoin}      	{	return superSymbol("RJOIN", sym.RJOIN, new String(yytext()));}
 {njoin}      	{	return superSymbol("NJOIN", sym.NJOIN, new String(yytext()));}
 {union}      	{	return superSymbol("UNION", sym.UNION, new String(yytext()));}
-{string}		{	return superSymbol("STRING", sym.STRING, new String(yytext()));}
+
 {nl}			{	return superSymbol("NL", sym.NL);}
 {space}			{	return superSymbol("SPACE", sym.SPACE,new String(yytext()));}
+{comma}			{	return superSymbol("COMMA", sym.COMMA, new String(yytext()));}
+{string}		{	return superSymbol("STRING", sym.STRING, new String(yytext()));}
